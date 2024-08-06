@@ -1,8 +1,21 @@
-import vine from '@vinejs/vine'
+import vine, { SimpleMessagesProvider } from '@vinejs/vine'
 
 export const sendMessageValidator = vine.compile(
     vine.object({
-        content: vine.string().trim().minLength(3),
+        content: vine.string().trim().minLength(2),
         propertyTitle: vine.string().trim().minLength(3),
     })
 )
+
+const messages = {
+    required: 'Le {{ field }} est obligatoire',
+    string: 'Le {{ field }} doit être une chaîne',
+    minLength: 'Le {{ field }} doit contenir {{ min }} caractères.',
+}
+
+const fields = {
+    propertyTitle: 'titre',
+    content: 'message',
+}
+
+vine.messagesProvider = new SimpleMessagesProvider(messages, fields)

@@ -1,4 +1,4 @@
-import vine from '@vinejs/vine'
+import vine, { SimpleMessagesProvider } from '@vinejs/vine'
 
 export const updateUserValidator = vine.compile(
     vine.object({
@@ -13,3 +13,24 @@ export const updateUserValidator = vine.compile(
         role: vine.enum(['User', 'Admin']).nullable(),
     })
 )
+
+
+const messages = {
+    required: '{{ field }} est obligatoire',
+    string: '{{ field }} doit être une chaîne',
+    minLength: '{{ field }} doit contenir {{ min }} caractères',
+    maxLength: '{{ field }} doit contenir {{ max }} caractères',
+    email: 'Adresse e-mail invalide',
+    mobile: 'Numéro de téléphone invalide'
+}
+
+const fields = {
+    email: 'Email',
+    password: 'Mot de passe',
+    fullName: 'Nom complet',
+    avatar: 'Avatar',
+    phoneNumber: 'Téléphone',
+    role: 'Rôle',
+}
+
+vine.messagesProvider = new SimpleMessagesProvider(messages, fields)

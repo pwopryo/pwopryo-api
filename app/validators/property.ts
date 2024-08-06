@@ -1,4 +1,4 @@
-import vine from '@vinejs/vine'
+import vine, { SimpleMessagesProvider } from '@vinejs/vine'
 
 export const createPropertyValidator = vine.compile(
     vine.object({
@@ -22,6 +22,7 @@ export const createPropertyValidator = vine.compile(
         num_bathrooms: vine.number().positive(),
         offers: vine.array(vine.number()),
         is_available: vine.boolean(),
+        disponibility: vine.enum(['À vendre', 'À louer']),
         images: vine.array(
             vine.file({
                 size: '10mb',
@@ -60,3 +61,33 @@ export const updatePropertyValidator = vine.compile(
             })).minLength(3).maxLength(30)
     })
 )
+
+
+const messages = {
+    required: '{{ field }} est obligatoire',
+    string: '{{ field }} doit être une chaîne',
+    minLength: '{{ field }} doit contenir {{ min }} caractères',
+    maxLength: '{{ field }} doit contenir {{ max }} caractères',
+    boolean: 'La valeur doit être un booléen',
+    positive: '{{ field }} doit être positif',
+    number: '{{ field }} doit être un nombrer',
+}
+
+const fields = {
+    title: 'titre',
+    description: 'description',
+    address: 'adresse',
+    city: 'ville',
+    department: 'département',
+    type: 'type',
+    price: 'prix',
+    num_living_rooms: 'salons',
+    num_bedrooms: 'chambres',
+    num_bathrooms: 'salles de bains',
+    offers: 'offres',
+    is_available: 'toujours disponibile',
+    disponibility: 'disponibilité',
+    images: "images"
+}
+
+vine.messagesProvider = new SimpleMessagesProvider(messages, fields)

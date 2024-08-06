@@ -23,15 +23,11 @@ export default class PropertiesController {
                 )
 
             return response
-                .status(200)
-                .json({ data: properties })
+                .ok({ data: properties })
         } catch (error) {
-            return response
-                .status(500)
-                .json({
-                    message: 'Error retrieving properties',
-                    error: error
-                });
+            return response.internalServerError({
+                message: "Erreur lors de la récupération des propriétés.",
+            })
         }
     }
 
@@ -54,7 +50,8 @@ export default class PropertiesController {
                 numLivingRooms: payload.num_living_rooms,
                 numBedrooms: payload.num_bedrooms,
                 numBathrooms: payload.num_bathrooms,
-                isAvailable: payload.is_available
+                isAvailable: payload.is_available,
+                disponibility: payload.disponibility
             })
 
             await property.related('offers').attach(payload.offers)
@@ -73,16 +70,15 @@ export default class PropertiesController {
                 })
             }
 
-            return response
-                .status(201)
-                .json({ data: property })
+            return response.created({ data: property })
         } catch (error) {
-            return response
-                .status(500)
-                .json({
-                    message: "Error creating property",
-                    error: error
-                });
+            if (error.code === 'E_VALIDATION_ERROR') {
+                return response.unprocessableEntity({ messages: error.messages })
+            }
+
+            return response.internalServerError({
+                message: "Erreur lors de la création de la propriété.",
+            })
         }
     }
 
@@ -100,21 +96,15 @@ export default class PropertiesController {
                 .first()
 
             if (!property) {
-                return response
-                    .status(404)
-                    .json({ message: 'Property not found.' })
+                return response.notFound({ message: 'Propriété introuvable.' })
             }
 
             return response
-                .status(200)
-                .json({ data: property })
+                .ok({ data: property })
         } catch (error) {
-            return response
-                .status(500)
-                .json({
-                    message: 'Error retrieving property',
-                    error: error
-                });
+            return response.internalServerError({
+                message: 'Erreur lors de la récupération de la propriété.',
+            })
         }
     }
 
@@ -128,12 +118,11 @@ export default class PropertiesController {
 
             if (!property) {
                 return response
-                    .status(404)
-                    .json({ message: 'Property not found.' })
+                    .notFound({ message: 'Propriété introuvable.' })
             }
 
             if (await bouncer.with(PropertyPolicy).denies('edit', property)) {
-                return response.forbidden('Access denied')
+                return response.forbidden('Accès refusé.')
             }
 
             const propertyUpdated = await property.merge({
@@ -179,16 +168,15 @@ export default class PropertiesController {
                 })
             }
 
-            return response
-                .status(201)
-                .json({ data: property })
+            return response.ok({ data: property })
         } catch (error) {
-            return response
-                .status(500)
-                .json({
-                    message: "Error updating property",
-                    error: error
-                });
+            if (error.code === 'E_VALIDATION_ERROR') {
+                return response.unprocessableEntity({ messages: error.messages })
+            }
+
+            return response.internalServerError({
+                message: "Erreur lors de la mise à jour de la propriété.",
+            })
         }
     }
 
@@ -202,27 +190,22 @@ export default class PropertiesController {
 
             if (!property) {
                 return response
-                    .status(404)
-                    .json({ message: 'Property not found.' })
+                    .notFound({ message: 'Propriété introuvable.' })
             }
 
             if (await bouncer.with(PropertyPolicy).denies('delete', property)) {
-                return response.forbidden('Access denied')
+                return response.forbidden('Accès refusé.')
             }
 
             await property.related('offers').detach()
             await property.delete();
 
             return response
-                .status(200)
-                .json({ message: 'Property deleted successfully' })
+                .ok({ message: 'Propriété supprimée avec succès.' })
         } catch (error) {
-            return response
-                .status(500)
-                .json({
-                    message: 'Error deleting property',
-                    error: error,
-                });
+            return response.internalServerError({
+                message: 'Erreur lors de la suppression de la propriété.'
+            })
         }
     }
 
@@ -256,15 +239,11 @@ export default class PropertiesController {
                 )
 
             return response
-                .status(200)
-                .json({ data: properties })
+                .ok({ data: properties })
         } catch (error) {
-            return response
-                .status(500)
-                .json({
-                    message: 'Error filtering properties',
-                    error: error.message,
-                });
+            return response.internalServerError({
+                message: 'Propriétés de filtrage des erreurs.'
+            })
         }
     }
 }

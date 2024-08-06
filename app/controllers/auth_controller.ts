@@ -10,9 +10,11 @@ export default class AuthController {
         try {
             const payload = await request.validateUsing(registerUserValidator)
 
-            await payload.avatar.move(app.makePath('uploads/profiles'), {
-                name: `${cuid()}.webp`
-            })
+            if (payload.avatar) {
+                await payload.avatar.move(app.makePath('uploads/profiles'), {
+                    name: `${cuid()}.webp`
+                })
+            }
 
             const otp = Math.floor(100000 + Math.random() * 900000).toString()
 
@@ -20,8 +22,8 @@ export default class AuthController {
                 fullName: payload.fullName,
                 email: payload.email,
                 password: payload.password,
-                avatar: payload.avatar.fileName,
-                phoneNumber: payload.PhoneNumber,
+                avatar: payload.avatar?.fileName,
+                phoneNumber: payload.phoneNumber,
                 OTP: otp,
                 role: payload.role,
                 isVerified: false
@@ -35,15 +37,19 @@ export default class AuthController {
                     .htmlView('emails/verify_email', { user })
             })
 
-            return response
-                .status(201)
-                .json({ message: "User successfully created" });
+            return response.created({ data: user });
         } catch (error) {
-            return response
-                .status(422)
-                .json({
-                    error: error
-                });
+            if (error.code === 'E_VALIDATION_ERROR') {
+                return response.unprocessableEntity({ messages: error.messages })
+            }
+
+            if (error.code === '23505') {
+                return response.conflict({ message: `L'email existe déjà.` })
+            }
+
+            return response.internalServerError({
+                message: "Une erreur s'est produite lors de l'inscription.",
+            })
         }
     }
 
@@ -54,23 +60,22 @@ export default class AuthController {
             const user = await User.findBy('email', payload.email);
 
             if (!user) {
-                return response.status(404).json({ message: "User not found." });
+                return response.notFound({
+                    message: "Utilisateur non trouvé."
+                });
             }
 
             if (user.OTP === payload.otp) {
                 user.isVerified = true;
                 await user.save();
 
-                return response
-                    .status(200)
-                    .json({ message: "OTP verified successfully." });
+                return response.ok({ message: "Vérification réussie." });
             } else {
-                return response.status(400).json({ message: "Invalid OTP." });
+                return response.badRequest({ message: "OTP invalide." });
             }
         } catch (error) {
-            return response.status(500).json({
-                message: "Error verifying OTP.",
-                error: error,
+            return response.internalServerError({
+                message: "Erreur lors de la vérification de l'e-mail.",
             });
         }
     }
@@ -89,25 +94,43 @@ export default class AuthController {
                 !!request.input('remember_me')
             )
 
+            return response.ok({ data: user })
         } catch (error) {
-            return response
-                .status(error.status)
-                .json({
-                    message: error.name,
-                });
+            if (error.code === 'E_VALIDATION_ERROR') {
+                return response.unprocessableEntity({ messages: error.messages })
+            }
+
+            if (error.code === 'E_INVALID_CREDENTIALS') {
+                return response.unauthorized({
+                    message: 'Email ou mot de passe invalide.'
+                })
+            }
+
+            return response.internalServerError({
+                message: "Une erreur s'est produite lors de la connexion.",
+            })
         }
     }
 
     public async logout({ auth, response }: HttpContext) {
         try {
             await auth.use('web').logout()
-            return response.status(204)
+            return response.ok({})
         } catch (error) {
-            return response
-                .status(error.status)
-                .json({
-                    message: error.name,
-                });
+            return response.internalServerError({
+                message: "Une erreur s'est produite lors de la déconnexion.",
+            })
+        }
+    }
+
+    async getuserInfo({ auth, response }: HttpContext) {
+        try {
+            const user = auth.user
+            return response.ok({ data: user })
+        } catch (error) {
+            return response.internalServerError({
+                message: "Une erreur s'est produite lors de l'obtention des informations utilisateur.",
+            })
         }
     }
 }

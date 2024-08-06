@@ -24,11 +24,12 @@ router.group(() => {
   router.post('/register', [AuthController, 'register'])
   router.post('/login', [AuthController, 'login'])
   router.post('/verify-email', [AuthController, 'verifyEmail'])
+    .use(middleware.auth())
   router.post('/logout', [AuthController, 'logout'])
     .use([middleware.auth(), middleware.userVerification()])
+  router.get('/me', [AuthController, 'getuserInfo']).use(middleware.auth())
   // router.post('/forgot-password', [AuthController, 'forgotPassword'])
   // router.post('/reset-password/:token', [AuthController, 'resetPassword'])
-  // router.get('/me', [AuthController, 'getuserInfo']).use(middleware.auth())
 }).prefix('auth')
 
 
@@ -62,7 +63,7 @@ router.group(() => {
 
 
 // Messages routes
-router.post('send-message/:id', [MessagesController, 'sendMessage'])
+router.post('send-message', [MessagesController, 'sendMessage'])
   .use([middleware.auth(), middleware.userVerification()])
 
 
