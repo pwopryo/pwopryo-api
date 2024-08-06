@@ -11,21 +11,17 @@ export default class UsersController {
     async index({ bouncer, response }: HttpContext) {
         try {
             if (await bouncer.with(UserPolicy).denies('index')) {
-                return response.forbidden('Access denied')
+                return response.forbidden('Accès refusé.')
             }
 
             const users = await User.all()
 
             return response
-                .status(200)
-                .json({ data: users })
+                .ok({ data: users })
         } catch (error) {
-            return response
-                .status(500)
-                .json({
-                    message: 'Error while fetching the users.',
-                    error: error
-                })
+            return response.internalServerError({
+                message: 'Erreur lors de la récupération des utilisateurs.',
+            })
         }
     }
 
@@ -38,24 +34,18 @@ export default class UsersController {
 
             if (!userFound) {
                 return response
-                    .status(404)
-                    .json({ message: 'User not found.' })
+                    .notFound({ message: 'Utilisateur non trouvé.' })
             }
 
             if (await bouncer.with(UserPolicy).denies('show', userFound)) {
-                return response.forbidden('Access denied')
+                return response.forbidden('Accès refusé.')
             }
 
-            return response
-                .status(200)
-                .json({ data: userFound })
+            return response.ok({ data: userFound })
         } catch (error) {
-            return response
-                .status(500)
-                .json({
-                    message: 'Error while fetching the user.',
-                    error: error
-                })
+            return response.internalServerError({
+                message: 'Erreur lors de la récupération de l\'utilisateur.'
+            })
         }
     }
 
@@ -69,12 +59,11 @@ export default class UsersController {
 
             if (!user) {
                 return response
-                    .status(404)
-                    .json({ message: 'User not found.' })
+                    .notFound({ message: 'Utilisateur non trouvé.' })
             }
 
             if (await bouncer.with(UserPolicy).denies('edit', user)) {
-                return response.forbidden('Access denied')
+                return response.forbidden('Accès refusé.')
             }
 
             if (payload.avatar) {
@@ -93,16 +82,15 @@ export default class UsersController {
                 role: payload.role,
             }).save()
 
-            return response
-                .status(200)
-                .json({ user: userUpdated })
+            return response.ok({ user: userUpdated })
         } catch (error) {
-            return response
-                .status(500)
-                .json({
-                    message: 'Error while updating the user.',
-                    error: error
-                })
+            if (error.code === 'E_VALIDATION_ERROR') {
+                return response.unprocessableEntity({ messages: error.messages })
+            }
+
+            return response.internalServerError({
+                message: 'Erreur lors de la mise à jour de l\'utilisateur.'
+            })
         }
     }
 
@@ -114,27 +102,20 @@ export default class UsersController {
             const user = await User.find(params.id)
 
             if (!user) {
-                return response
-                    .status(404)
-                    .json({ message: 'User not found.' })
+                return response.notFound({ message: 'Utilisateur non trouvé.' })
             }
 
             if (await bouncer.with(UserPolicy).denies('delete')) {
-                return response.forbidden('Access denied')
+                return response.forbidden('Accès refusé.')
             }
 
             await user.delete()
 
-            return response
-                .status(204)
-                .json({ message: "User successfully deleted" })
+            return response.ok({ message: "Utilisateur supprimé avec succès." })
         } catch (error) {
-            return response
-                .status(500)
-                .json({
-                    message: 'Error while deleting the user.',
-                    error: error
-                })
+            return response.internalServerError({
+                message: 'Erreur lors de la suppression de l\'utilisateur.',
+            })
         }
     }
 }

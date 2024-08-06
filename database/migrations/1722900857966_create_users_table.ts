@@ -9,7 +9,7 @@ export default class extends BaseSchema {
       table.string('full_name').notNullable()
       table.string('email', 254).notNullable().unique()
       table.string('password').notNullable()
-      table.string('avatar').notNullable()
+      table.string('avatar').nullable()
       table.string('phone_number').notNullable().unique()
       table.string('otp').notNullable()
       table.enu('role', ['User', 'Admin'], {

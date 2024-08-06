@@ -19,16 +19,11 @@ export default class FavoritesController {
                 .where({ isLiked: true, userId: auth.user!.id, })
 
 
-            return response
-                .status(200)
-                .json({ data: favorites })
+            return response.ok({ data: favorites })
         } catch (error) {
-            return response
-                .status(500)
-                .json({
-                    message: 'Error retrieving user favorites: ',
-                    error: error
-                });
+            return response.internalServerError({
+                message: 'Erreur lors de la récupération des favoris de l\'utilisateur.',
+            });
         }
     }
 
@@ -40,9 +35,7 @@ export default class FavoritesController {
             const property = await Property.find(params.id)
 
             if (!property) {
-                return response
-                    .status(404)
-                    .json({ message: 'Property not found.' })
+                return response.notFound({ message: 'Propriété introuvable.' })
             }
 
             const favorite = await Favorite.create({
@@ -51,16 +44,11 @@ export default class FavoritesController {
                 isLiked: true,
             })
 
-            return response
-                .status(201)
-                .json({ data: favorite })
+            return response.created({ data: favorite })
         } catch (error) {
-            return response
-                .status(500)
-                .json({
-                    message: "Error creating favorite",
-                    error: error
-                });
+            return response.internalServerError({
+                message: "Erreur lors de la création du favori.",
+            });
         }
     }
 
@@ -75,25 +63,18 @@ export default class FavoritesController {
             })
 
             if (!favorite) {
-                return response
-                    .status(404)
-                    .json({ message: 'Favorite not found.' })
+                return response.notFound({ message: 'Favoris introuvable.' })
             }
 
             const favoriteUpdated = await favorite.merge({
                 isLiked: !favorite.isLiked,
             }).save()
 
-            return response
-                .status(200)
-                .json({ data: favoriteUpdated })
+            return response.ok({ data: favoriteUpdated })
         } catch (error) {
-            return response
-                .status(500)
-                .json({
-                    message: "Error updating favorite",
-                    error: error
-                });
+            return response.internalServerError({
+                message: "Erreur lors de la mise à jour du favori.",
+            });
         }
     }
 }

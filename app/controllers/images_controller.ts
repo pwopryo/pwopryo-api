@@ -9,7 +9,7 @@ export default class ImagesController {
         const normalizedPath = normalize(filePath)
 
         if (PATH_TRAVERSAL_REGEX.test(normalizedPath)) {
-            return response.badRequest('Malformed path')
+            return response.badRequest('Chemin mal formé.')
         }
 
         const basePath = params.type === 'profiles' ? 'uploads/profiles' : 'uploads/images'
