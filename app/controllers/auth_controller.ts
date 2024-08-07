@@ -1,12 +1,13 @@
+import Otp from '#models/otp';
 import User from '#models/user';
-import { registerUserValidator, loginUserValidator, verifyEmailValidator } from '#validators/auth';
+import { registerUserValidator, loginUserValidator, otpValidator, emailValidator, resetPasswordValidator } from '#validators/auth';
 import { cuid } from '@adonisjs/core/helpers';
 import type { HttpContext } from '@adonisjs/core/http'
 import app from '@adonisjs/core/services/app';
-import mail from '@adonisjs/mail/services/main';
+import { randomUUID } from 'crypto';
 
 export default class AuthController {
-    public async register({ request, response }: HttpContext) {
+    public async register({ auth, request, response }: HttpContext) {
         try {
             const payload = await request.validateUsing(registerUserValidator)
 
@@ -16,26 +17,19 @@ export default class AuthController {
                 })
             }
 
-            const otp = Math.floor(100000 + Math.random() * 900000).toString()
-
             const user = await User.create({
+                uuid: randomUUID(),
                 fullName: payload.fullName,
                 email: payload.email,
                 password: payload.password,
                 avatar: payload.avatar?.fileName,
                 phoneNumber: payload.phoneNumber,
-                OTP: otp,
-                role: payload.role,
+                role: payload.role ? payload.role : "User",
                 isVerified: false
             })
 
-            await mail.sendLater((message) => {
-                message
-                    .to(payload.email)
-                    .from('jclayton.trade@gmail.com')
-                    .subject('Vérifiez votre nouveau compte Proprio')
-                    .htmlView('emails/verify_email', { user })
-            })
+            await auth.use('web').login(user, !!request.input('remember_me'))
+            await user.sendVerifyEmail()
 
             return response.created({ data: user });
         } catch (error) {
@@ -44,36 +38,43 @@ export default class AuthController {
             }
 
             if (error.code === '23505') {
-                return response.conflict({ message: `L'email existe déjà.` })
+                return response.conflict({ message: 'L\'email existe déjà' })
             }
 
             return response.internalServerError({
-                message: "Une erreur s'est produite lors de l'inscription.",
+                message: "Une erreur s'est produite lors de l'inscription",
             })
         }
     }
 
-    public async verifyEmail({ request, response }: HttpContext) {
+    public async verifyOtp({ auth, request, response }: HttpContext) {
         try {
-            const payload = await request.validateUsing(verifyEmailValidator);
+            const { otp, type } = await request.validateUsing(otpValidator);
 
-            const user = await User.findBy('email', payload.email);
+            const user = await Otp.getUserOtp(otp, type)
 
-            if (!user) {
-                return response.notFound({
-                    message: "Utilisateur non trouvé."
+            if (!user || !(user?.id === auth.user?.id)) {
+                return response.badRequest({
+                    message: "OTP invalide ou expiré"
                 });
             }
 
-            if (user.OTP === payload.otp) {
-                user.isVerified = true;
-                await user.save();
-
+            if (type == 'PASSWORD_RESET') {
+                await Otp.expireOtp(user, 'passwordResetOtps')
                 return response.ok({ message: "Vérification réussie." });
-            } else {
-                return response.badRequest({ message: "OTP invalide." });
             }
+
+            user.isVerified = true
+            await user.save()
+            await Otp.expireOtp(user, 'verifyEmailOtps')
+            await user.sendWelcomeEmail()
+
+            return response.ok({ message: "Vérification réussie." });
         } catch (error) {
+            if (error.code === 'E_VALIDATION_ERROR') {
+                return response.unprocessableEntity({ messages: error.messages })
+            }
+
             return response.internalServerError({
                 message: "Erreur lors de la vérification de l'e-mail.",
             });
@@ -102,12 +103,12 @@ export default class AuthController {
 
             if (error.code === 'E_INVALID_CREDENTIALS') {
                 return response.unauthorized({
-                    message: 'Email ou mot de passe invalide.'
+                    message: 'Email ou mot de passe invalide'
                 })
             }
 
             return response.internalServerError({
-                message: "Une erreur s'est produite lors de la connexion.",
+                message: "Une erreur s'est produite lors de la connexion",
             })
         }
     }
@@ -118,7 +119,7 @@ export default class AuthController {
             return response.ok({})
         } catch (error) {
             return response.internalServerError({
-                message: "Une erreur s'est produite lors de la déconnexion.",
+                message: "Une erreur s'est produite lors de la déconnexion",
             })
         }
     }
@@ -129,7 +130,72 @@ export default class AuthController {
             return response.ok({ data: user })
         } catch (error) {
             return response.internalServerError({
-                message: "Une erreur s'est produite lors de l'obtention des informations utilisateur.",
+                message: "Une erreur s'est produite lors de l'obtention des informations utilisateur",
+            })
+        }
+    }
+
+    async forgotPassword({ request, response }: HttpContext) {
+        try {
+            const { email } = await request.validateUsing(emailValidator)
+            const user = await User.findBy('email', email)
+
+            if (!user) {
+                return response.badRequest({ message: 'Email non trouvé' })
+            }
+
+            await user.sendForgotPasswordEmail()
+
+            return response.ok({
+                message: 'OTP envoyé à votre email.'
+            })
+        } catch (error) {
+            if (error.code === 'E_VALIDATION_ERROR') {
+                return response.unprocessableEntity({ messages: error.messages })
+            }
+
+            return response.internalServerError({
+                message:
+                    "Une erreur s'est produite lors de la demande de réinitialisation du mot de passe.",
+            })
+        }
+    }
+
+    async resetPassword({ request, response }: HttpContext) {
+        try {
+            const { password, email } = await request
+                .validateUsing(resetPasswordValidator)
+
+            const user = await User.findBy('email', email)
+
+            await user!.merge({ password }).save()
+
+            return response.ok({
+                data: 'Le mot de passe a été modifié avec succès.'
+            })
+        } catch (error) {
+            if (error.code === 'E_VALIDATION_ERROR') {
+                return response.unprocessableEntity({ messages: error.messages })
+            }
+
+            return response.internalServerError({
+                message: "Une erreur s'est produite lors de la réinitialisation du mot de passe.",
+            })
+        }
+    }
+
+    public async sendOtp({ auth, response }: HttpContext) {
+        try {
+            if (auth.user!.isVerified) {
+                return response.badRequest({ message: 'Utilisateur déjà vérifié' })
+            }
+
+            await auth.user!.sendVerifyEmail()
+
+            return response.ok({ message: 'OTP envoyé à votre email.' });
+        } catch (error) {
+            return response.internalServerError({
+                message: "Une erreur s'est produite lors de l'envoi de l'OTP.",
             })
         }
     }

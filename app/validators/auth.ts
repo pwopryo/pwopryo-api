@@ -10,7 +10,7 @@ export const registerUserValidator = vine.compile(
             extnames: ['jpg', 'png', 'jpeg']
         }).optional(),
         phoneNumber: vine.string().trim().mobile().minLength(8).maxLength(8),
-        role: vine.enum(['User', 'Admin']),
+        role: vine.enum(['User', 'Admin']).nullable(),
     })
 )
 
@@ -21,10 +21,23 @@ export const loginUserValidator = vine.compile(
     })
 )
 
-export const verifyEmailValidator = vine.compile(
+export const otpValidator = vine.compile(
+    vine.object({
+        otp: vine.string().trim().maxLength(6),
+        type: vine.enum(['VERIFY_EMAIL', 'PASSWORD_RESET'])
+    })
+)
+
+export const emailValidator = vine.compile(
     vine.object({
         email: vine.string().trim().email(),
-        otp: vine.string().trim(),
+    })
+)
+
+export const resetPasswordValidator = vine.compile(
+    vine.object({
+        email: vine.string().trim().email(),
+        password: vine.string().trim().minLength(8).confirmed(),
     })
 )
 

@@ -21,6 +21,9 @@ export default class User extends compose(BaseModel, AuthFinder) {
   declare id: number
 
   @column()
+  declare uuid: string
+
+  @column()
   declare fullName: string | null
 
   @column()
@@ -79,7 +82,7 @@ export default class User extends compose(BaseModel, AuthFinder) {
       message
         .to(this.email)
         .from(env.get('EMAIL'))
-        .subject('Vérifiez votre nouveau compte Proprio')
+        .subject('Vérifiez votre nouveau compte Pwopryo')
         .htmlView('emails/verify_email', { otp: otp })
     })
   }
