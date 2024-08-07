@@ -65,7 +65,7 @@ export default class PropertiesController {
 
                 await PropertyImage.create({
                     propertyId: property.id,
-                    imageName: image.fileName,
+                    imageURL: image.fileName,
                     isPrimary: index === 0
                 })
             }
@@ -146,7 +146,7 @@ export default class PropertiesController {
                 .where('property_id', property.id)
 
             for (const img of existingImages) {
-                const filePath = path.join('uploads/properties', img.imageName)
+                const filePath = path.join('uploads/properties', img.imageURL)
                 if (fs.existsSync(filePath)) {
                     fs.unlinkSync(filePath)
                 }
@@ -163,7 +163,7 @@ export default class PropertiesController {
 
                 await PropertyImage.create({
                     propertyId: property.id,
-                    imageName: image.fileName,
+                    imageURL: image.fileName,
                     isPrimary: index === 0
                 })
             }
