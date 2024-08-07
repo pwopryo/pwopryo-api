@@ -23,13 +23,14 @@ router.get('health', ({ response }) => response.noContent())
 router.group(() => {
   router.post('/register', [AuthController, 'register'])
   router.post('/login', [AuthController, 'login'])
-  router.post('/verify-email', [AuthController, 'verifyEmail'])
+  router.post('/verify-email', [AuthController, 'verifyOtp'])
     .use(middleware.auth())
   router.post('/logout', [AuthController, 'logout'])
     .use([middleware.auth(), middleware.userVerification()])
   router.get('/me', [AuthController, 'getuserInfo']).use(middleware.auth())
-  // router.post('/forgot-password', [AuthController, 'forgotPassword'])
-  // router.post('/reset-password/:token', [AuthController, 'resetPassword'])
+  router.post('/forgot-password', [AuthController, 'forgotPassword'])
+  router.post('/reset-password', [AuthController, 'resetPassword'])
+  router.post('/send-otp', [AuthController, 'sendOtp'])
 }).prefix('auth')
 
 
