@@ -7,6 +7,9 @@ import Property from './property.js'
 import Favorite from './favorite.js'
 import type { HasMany } from '@adonisjs/lucid/types/relations'
 import { DbRememberMeTokensProvider } from '@adonisjs/auth/session'
+import Otp from './otp.js'
+import mail from '@adonisjs/mail/services/main'
+import env from '#start/env'
 
 const AuthFinder = withAuthFinder(() => hash.use('scrypt'), {
   uids: ['email'],
@@ -53,5 +56,63 @@ export default class User extends compose(BaseModel, AuthFinder) {
   @hasMany(() => Favorite)
   declare favorites: HasMany<typeof Favorite>
 
+  // OTP relation
+  @hasMany(() => Otp)
+  declare otps: HasMany<typeof Otp>
+
+  @hasMany(() => Otp, {
+    onQuery: (query) => query.where('type', 'PASSWORD_RESET'),
+  })
+  declare passwordResetOtps: HasMany<typeof Otp>
+
+  @hasMany(() => Otp, {
+    onQuery: (query) => query.where('type', 'VERIFY_EMAIL'),
+  })
+  declare verifyEmailOtps: HasMany<typeof Otp>
+
   static rememberMeTokens = DbRememberMeTokensProvider.forModel(User)
+
+  async sendVerifyEmail() {
+    const otp = await Otp.generateVerifyEmailOtp(this)
+
+    await mail.sendLater((message) => {
+      message
+        .to(this.email)
+        .from(env.get('EMAIL'))
+        .subject('Vérifiez votre nouveau compte Proprio')
+        .htmlView('emails/verify_email', { otp: otp })
+    })
+  }
+
+  async sendWelcomeEmail() {
+    await mail.sendLater((message) => {
+      message
+        .to(this.email)
+        .from(env.get('EMAIL'))
+        .subject('Bienvenue chez Pwopryo')
+        .htmlView('emails/welcome', { user: this })
+    })
+  }
+
+  async sendForgotPasswordEmail() {
+    const otp = await Otp.generatePasswordResetOtp(this)
+
+    await mail.sendLater((message) => {
+      message
+        .to(this.email)
+        .from(env.get('EMAIL'))
+        .subject('Réinitialise votre mot de passe Pwopryo')
+        .htmlView('emails/forgot_password', { user: this, otp: otp })
+    })
+  }
+
+  async sendPasswordChangesEmail() {
+    await mail.sendLater((message) => {
+      message
+        .to(this.email)
+        .from(env.get('EMAIL'))
+        .subject('Pwopryo - Mot de Passe Modifié')
+        .htmlView('emails/password_changed', { user: this })
+    })
+  }
 }

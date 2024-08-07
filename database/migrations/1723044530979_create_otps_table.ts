@@ -1,19 +1,15 @@
 import { BaseSchema } from '@adonisjs/lucid/schema'
 
 export default class extends BaseSchema {
-  protected tableName = 'property_images'
+  protected tableName = 'otps'
 
   async up() {
     this.schema.createTable(this.tableName, (table) => {
       table.increments('id').primary()
-      table.integer('property_id')
-        .unsigned()
-        .references('properties.id')
-        .onDelete('CASCADE')
-        .onUpdate('CASCADE')
-        .notNullable()
-      table.string('image_url').notNullable()
-      table.boolean('is_primary').notNullable()
+      table.integer('user_id').unsigned().references('users.id').onDelete('CASCADE')
+      table.string('type').notNullable()
+      table.string('code', 6).notNullable()
+      table.timestamp('expires_at')
       table.timestamp('created_at')
       table.timestamp('updated_at')
     })

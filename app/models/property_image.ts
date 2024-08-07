@@ -11,7 +11,7 @@ export default class PropertyImage extends BaseModel {
   declare propertyId: number
 
   @column()
-  declare imageName: string
+  declare imageURL: string
 
   @column()
   declare isPrimary: boolean
