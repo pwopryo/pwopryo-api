@@ -17,7 +17,7 @@ export default class Offer extends BaseModel {
   declare updatedAt: DateTime
 
   @manyToMany(() => Property, {
-    pivotTable: 'offer_properties'
+    pivotTable: 'property_offers'
   })
   declare properties: ManyToMany<typeof Property>
 }

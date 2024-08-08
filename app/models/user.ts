@@ -39,9 +39,6 @@ export default class User extends compose(BaseModel, AuthFinder) {
   declare phoneNumber: string
 
   @column({ serializeAs: null })
-  declare OTP: string
-
-  @column({ serializeAs: null })
   declare role: 'User' | 'Admin'
 
   @column()
@@ -109,7 +106,7 @@ export default class User extends compose(BaseModel, AuthFinder) {
     })
   }
 
-  async sendPasswordChangesEmail() {
+  async sendPasswordChangedEmail() {
     await mail.sendLater((message) => {
       message
         .to(this.email)

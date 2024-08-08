@@ -9,7 +9,7 @@ export const registerUserValidator = vine.compile(
             size: '10mb',
             extnames: ['jpg', 'png', 'jpeg']
         }).optional(),
-        phoneNumber: vine.string().trim().mobile().minLength(8).maxLength(8),
+        phoneNumber: vine.string().trim().mobile(),
         role: vine.enum(['User', 'Admin']).nullable(),
     })
 )
