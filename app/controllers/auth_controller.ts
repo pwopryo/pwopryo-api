@@ -169,6 +169,7 @@ export default class AuthController {
             const user = await User.findBy('email', email)
 
             await user!.merge({ password }).save()
+            await user!.sendPasswordChangedEmail()
 
             return response.ok({
                 data: 'Le mot de passe a été modifié avec succès.'

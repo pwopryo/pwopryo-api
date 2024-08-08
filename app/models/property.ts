@@ -62,7 +62,7 @@ export default class Property extends BaseModel {
   declare images: HasMany<typeof PropertyImage>
 
   @manyToMany(() => Offer, {
-    pivotTable: 'offer_properties'
+    pivotTable: 'property_offers'
   })
   declare offers: ManyToMany<typeof Offer>
 

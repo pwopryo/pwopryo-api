@@ -6,17 +6,16 @@ export default class extends BaseSchema {
   async up() {
     this.schema.createTable(this.tableName, (table) => {
       table.increments('id').notNullable().primary()
-      table.string('uuis').notNullable()
+      table.string('uuid').notNullable()
       table.string('full_name').notNullable()
       table.string('email', 254).notNullable().unique()
       table.string('password').notNullable()
       table.string('avatar').nullable()
       table.string('phone_number').notNullable().unique()
-      table.string('otp').notNullable()
       table.enu('role', ['User', 'Admin'], {
         useNative: true,
         enumName: 'user_role',
-        existingType: true,
+        existingType: false,
       }).notNullable()
       table.boolean('is_verified').notNullable()
       table.timestamp('created_at').notNullable()
