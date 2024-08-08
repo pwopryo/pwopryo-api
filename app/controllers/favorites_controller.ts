@@ -11,13 +11,12 @@ export default class FavoritesController {
             const favorites = await Favorite
                 .query()
                 .preload('property', (property) =>
-                    property.preload('images', (image) => image.select('imageName'))
+                    property.preload('images', (image) => image.select('imageUrl', 'is_primary'))
                         .where('isAvailable', true)
                         .select(
                             'id', 'title', 'address', 'city', 'department', 'type', 'price', 'createdAt'
                         ))
                 .where({ isLiked: true, userId: auth.user!.id, })
-
 
             return response.ok({ data: favorites })
         } catch (error) {
@@ -35,7 +34,7 @@ export default class FavoritesController {
             const property = await Property.find(params.id)
 
             if (!property) {
-                return response.notFound({ message: 'Propriété introuvable.' })
+                return response.notFound({ message: 'Propriété introuvable' })
             }
 
             const favorite = await Favorite.create({
@@ -63,7 +62,7 @@ export default class FavoritesController {
             })
 
             if (!favorite) {
-                return response.notFound({ message: 'Favoris introuvable.' })
+                return response.notFound({ message: 'Favoris introuvable' })
             }
 
             const favoriteUpdated = await favorite.merge({

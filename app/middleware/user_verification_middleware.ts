@@ -7,7 +7,9 @@ export default class UserVerificationMiddleware {
      * Middleware logic goes here (before the next call)
      */
     if (!ctx.auth.user?.isVerified) {
-      return ctx.response.unauthorized({ message: 'User is not verified' })
+      return ctx.response.unauthorized({
+        message: "L'utilisateur n'est pas vérifié"
+      })
     }
     /**
      * Call next method in the pipeline and return its output

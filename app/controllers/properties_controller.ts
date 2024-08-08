@@ -16,15 +16,15 @@ export default class PropertiesController {
         try {
             const properties = await Property
                 .query()
-                .preload('images', (image) => image.select('imageName'))
+                .preload('images', (image) => image.select('image_url', 'is_primary'))
                 .where('isAvailable', true)
                 .select(
-                    'id', 'title', 'address', 'city', 'department', 'type', 'price', 'createdAt'
+                    'id', 'title', 'address', 'city', 'department', 'type', 'price', 'disponibility', 'createdAt'
                 )
 
-            return response
-                .ok({ data: properties })
+            return response.ok({ data: properties })
         } catch (error) {
+            console.log(error)
             return response.internalServerError({
                 message: "Erreur lors de la récupération des propriétés.",
             })
@@ -65,7 +65,7 @@ export default class PropertiesController {
 
                 await PropertyImage.create({
                     propertyId: property.id,
-                    imageURL: image.fileName,
+                    imageUrl: image.fileName,
                     isPrimary: index === 0
                 })
             }
@@ -92,16 +92,17 @@ export default class PropertiesController {
                 .where('id', params.id)
                 .preload('user', (user) => user.select('fullName', 'avatar'))
                 .preload('offers', (offer) => offer.select('name'))
-                .preload('images', (image) => image.select('imageName'))
+                .preload('images', (image) => image.select('imageUrl', 'is_primary'))
                 .first()
 
             if (!property) {
-                return response.notFound({ message: 'Propriété introuvable.' })
+                return response.notFound({ message: 'Propriété introuvable' })
             }
 
             return response
                 .ok({ data: property })
         } catch (error) {
+            console.log(error)
             return response.internalServerError({
                 message: 'Erreur lors de la récupération de la propriété.',
             })
@@ -122,7 +123,7 @@ export default class PropertiesController {
             }
 
             if (await bouncer.with(PropertyPolicy).denies('edit', property)) {
-                return response.forbidden('Accès refusé.')
+                return response.forbidden({ message: 'Accès refusé.' })
             }
 
             const propertyUpdated = await property.merge({
@@ -136,6 +137,7 @@ export default class PropertiesController {
                 numLivingRooms: payload.num_living_rooms,
                 numBedrooms: payload.num_bedrooms,
                 numBathrooms: payload.num_bathrooms,
+                disponibility: payload.disponibility,
                 isAvailable: payload.is_available
             }).save()
 
@@ -146,7 +148,7 @@ export default class PropertiesController {
                 .where('property_id', property.id)
 
             for (const img of existingImages) {
-                const filePath = path.join('uploads/properties', img.imageURL)
+                const filePath = path.join('uploads/properties', img.imageUrl)
                 if (fs.existsSync(filePath)) {
                     fs.unlinkSync(filePath)
                 }
@@ -163,7 +165,7 @@ export default class PropertiesController {
 
                 await PropertyImage.create({
                     propertyId: property.id,
-                    imageURL: image.fileName,
+                    imageUrl: image.fileName,
                     isPrimary: index === 0
                 })
             }
@@ -194,14 +196,13 @@ export default class PropertiesController {
             }
 
             if (await bouncer.with(PropertyPolicy).denies('delete', property)) {
-                return response.forbidden('Accès refusé.')
+                return response.forbidden({ message: 'Accès refusé.' })
             }
 
             await property.related('offers').detach()
             await property.delete();
 
-            return response
-                .ok({ message: 'Propriété supprimée avec succès.' })
+            return response.ok({ message: 'Propriété supprimée avec succès.' })
         } catch (error) {
             return response.internalServerError({
                 message: 'Erreur lors de la suppression de la propriété.'
@@ -221,7 +222,7 @@ export default class PropertiesController {
 
             const properties = await Property.query()
                 .where('isAvailable', true)
-                .preload('images', (image) => image.select('imageName'))
+                .preload('images', (image) => image.select('image_url', 'is_primary'))
                 .if(city, (query) => query.where({ city }))
                 .if(department, (query) => query.where({ department }))
                 .if(type, (query) => query.where({ type }))
@@ -235,7 +236,7 @@ export default class PropertiesController {
                     offerQuery.whereIn('name', offers);
                 }))
                 .select(
-                    'id', 'title', 'address', 'city', 'department', 'type', 'price', 'createdAt'
+                    'id', 'title', 'address', 'city', 'department', 'type', 'price', 'disponibility', 'createdAt'
                 )
 
             return response

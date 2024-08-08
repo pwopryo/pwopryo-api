@@ -59,12 +59,12 @@ router.group(() => {
 router.group(() => {
   router.get('/', [FavoritesController, 'index'])
   router.post('/:id', [FavoritesController, 'store'])
-  router.delete('/:id', [FavoritesController, 'update'])
+  router.put('/:id', [FavoritesController, 'update'])
 }).use([middleware.auth(), middleware.userVerification()]).prefix('favorites')
 
 
 // Messages routes
-router.post('send-message', [MessagesController, 'sendMessage'])
+router.post('send-message/:propertyId', [MessagesController, 'sendMessage'])
   .use([middleware.auth(), middleware.userVerification()])
 
 

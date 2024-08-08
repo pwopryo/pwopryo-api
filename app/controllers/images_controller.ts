@@ -12,7 +12,7 @@ export default class ImagesController {
             return response.badRequest('Chemin mal formé.')
         }
 
-        const basePath = params.type === 'profiles' ? 'uploads/profiles' : 'uploads/images'
+        const basePath = params.type === 'profiles' ? 'uploads/profiles' : 'uploads/properties'
         const absolutePath = app.makePath(basePath, normalizedPath)
         return response.download(absolutePath)
     }
