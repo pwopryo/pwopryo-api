@@ -115,4 +115,19 @@ export default class User extends compose(BaseModel, AuthFinder) {
         .htmlView('emails/password_changed', { user: this })
     })
   }
+
+  async sendEmailToPropertyOwner(receiver: User, content: string, propertyTitle: string) {
+    await mail.sendLater((message) => {
+      message
+        .to(receiver.email)
+        .from(env.get('EMAIL'))
+        .subject('Pwopryo - Message concernant un de vos biens')
+        .htmlView('emails/property_owner_email', {
+          senderName: this.fullName,
+          receiverName: receiver.fullName,
+          content: content,
+          propertyTitle: propertyTitle,
+        })
+    })
+  }
 }

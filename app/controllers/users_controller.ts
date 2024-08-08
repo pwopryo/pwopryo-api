@@ -11,13 +11,12 @@ export default class UsersController {
     async index({ bouncer, response }: HttpContext) {
         try {
             if (await bouncer.with(UserPolicy).denies('index')) {
-                return response.forbidden('Accès refusé.')
+                return response.forbidden({ message: 'Accès refusé' })
             }
 
             const users = await User.all()
 
-            return response
-                .ok({ data: users })
+            return response.ok({ data: users })
         } catch (error) {
             return response.internalServerError({
                 message: 'Erreur lors de la récupération des utilisateurs.',
@@ -33,12 +32,11 @@ export default class UsersController {
             const userFound = await User.find(params.id)
 
             if (!userFound) {
-                return response
-                    .notFound({ message: 'Utilisateur non trouvé.' })
+                return response.notFound({ message: 'Utilisateur non trouvé' })
             }
 
             if (await bouncer.with(UserPolicy).denies('show', userFound)) {
-                return response.forbidden('Accès refusé.')
+                return response.forbidden({ message: 'Accès refusé' })
             }
 
             return response.ok({ data: userFound })
@@ -58,12 +56,11 @@ export default class UsersController {
             const user = await User.find(params.id)
 
             if (!user) {
-                return response
-                    .notFound({ message: 'Utilisateur non trouvé.' })
+                return response.notFound({ message: 'Utilisateur non trouvé' })
             }
 
             if (await bouncer.with(UserPolicy).denies('edit', user)) {
-                return response.forbidden('Accès refusé.')
+                return response.forbidden({ message: 'Accès refusé' })
             }
 
             if (payload.avatar) {
@@ -78,7 +75,7 @@ export default class UsersController {
                 email: payload.email,
                 password: payload.password,
                 avatar: payload.avatar?.fileName,
-                phoneNumber: payload.PhoneNumber,
+                phoneNumber: payload.phoneNumber,
                 role: payload.role,
             }).save()
 
@@ -102,11 +99,11 @@ export default class UsersController {
             const user = await User.find(params.id)
 
             if (!user) {
-                return response.notFound({ message: 'Utilisateur non trouvé.' })
+                return response.notFound({ message: 'Utilisateur non trouvé' })
             }
 
             if (await bouncer.with(UserPolicy).denies('delete')) {
-                return response.forbidden('Accès refusé.')
+                return response.forbidden({ message: 'Accès refusé' })
             }
 
             await user.delete()

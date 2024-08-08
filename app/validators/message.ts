@@ -3,7 +3,6 @@ import vine, { SimpleMessagesProvider } from '@vinejs/vine'
 export const sendMessageValidator = vine.compile(
     vine.object({
         content: vine.string().trim().minLength(2),
-        propertyTitle: vine.string().trim().minLength(3),
     })
 )
 
