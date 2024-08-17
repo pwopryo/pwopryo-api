@@ -17,7 +17,7 @@ export const createPropertyValidator = vine.compile(
             'Entrepôt', 'Terrain'
         ]),
         price: vine.number().positive(),
-        num_living_rooms: vine.number().positive(),
+        sqft: vine.number().positive(),
         num_bedrooms: vine.number().positive(),
         num_bathrooms: vine.number().positive(),
         offers: vine.array(vine.number()),
@@ -48,7 +48,7 @@ export const updatePropertyValidator = vine.compile(
             'Entrepôt', 'Terrain'
         ]),
         price: vine.number().positive(),
-        num_living_rooms: vine.number().positive(),
+        sqft: vine.number().positive(),
         num_bedrooms: vine.number().positive(),
         num_bathrooms: vine.number().positive(),
         offers: vine.array(vine.number()),
@@ -81,7 +81,7 @@ const fields = {
     department: 'département',
     type: 'type',
     price: 'prix',
-    num_living_rooms: 'salons',
+    sqft: 'pieds carrés',
     num_bedrooms: 'chambres',
     num_bathrooms: 'salles de bains',
     offers: 'offres',

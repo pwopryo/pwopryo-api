@@ -29,7 +29,7 @@ export default class extends BaseSchema {
       }).notNullable()
 
       table.integer('price').notNullable()
-      table.integer('num_living_rooms').notNullable()
+      table.integer('sqft').notNullable()
       table.integer('num_bedrooms').notNullable()
       table.integer('num_bathrooms').notNullable()
       table.boolean('is_available').notNullable()

@@ -19,7 +19,7 @@ export default class PropertiesController {
                 .preload('images', (image) => image.select('image_url', 'is_primary'))
                 .where('isAvailable', true)
                 .select(
-                    'id', 'title', 'address', 'city', 'department', 'type', 'price', 'disponibility', 'createdAt'
+                    'id', 'title', 'address', 'numBedrooms', 'numBathrooms', 'sqft', 'type', 'price', 'disponibility', 'createdAt'
                 )
 
             return response.ok({ data: properties })
@@ -47,7 +47,7 @@ export default class PropertiesController {
                 department: payload.department,
                 type: payload.type,
                 price: payload.price,
-                numLivingRooms: payload.num_living_rooms,
+                sqft: payload.sqft,
                 numBedrooms: payload.num_bedrooms,
                 numBathrooms: payload.num_bathrooms,
                 isAvailable: payload.is_available,
@@ -134,7 +134,7 @@ export default class PropertiesController {
                 department: payload.department,
                 type: payload.type,
                 price: payload.price,
-                numLivingRooms: payload.num_living_rooms,
+                sqft: payload.sqft,
                 numBedrooms: payload.num_bedrooms,
                 numBathrooms: payload.num_bathrooms,
                 disponibility: payload.disponibility,
@@ -217,7 +217,7 @@ export default class PropertiesController {
         try {
             const {
                 city, department, type, minPrice, maxPrice,
-                numLivingRooms, numBedrooms, numBathrooms, offers, disponibility
+                sqft, numBedrooms, numBathrooms, offers, disponibility
             } = request.qs();
 
             const properties = await Property.query()
@@ -228,7 +228,7 @@ export default class PropertiesController {
                 .if(type, (query) => query.where({ type }))
                 .if(minPrice, (query) => query.where('price', '>=', minPrice))
                 .if(maxPrice, (query) => query.where('price', '<=', maxPrice))
-                .if(numLivingRooms, (query) => query.where({ numLivingRooms }))
+                .if(sqft, (query) => query.where({ sqft }))
                 .if(numBedrooms, (query) => query.where({ numBedrooms }))
                 .if(numBathrooms, (query) => query.where({ numBathrooms }))
                 .if(disponibility, (query) => query.where({ disponibility }))
@@ -236,7 +236,7 @@ export default class PropertiesController {
                     offerQuery.whereIn('name', offers);
                 }))
                 .select(
-                    'id', 'title', 'address', 'city', 'department', 'type', 'price', 'disponibility', 'createdAt'
+                    'id', 'title', 'address', 'numBedrooms', 'numBathrooms', 'sqft', 'type', 'price', 'disponibility', 'createdAt'
                 )
 
             return response

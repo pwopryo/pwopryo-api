@@ -35,7 +35,7 @@ export default class Property extends BaseModel {
   declare price: number
 
   @column()
-  declare numLivingRooms: number
+  declare sqft: number
 
   @column()
   declare numBedrooms: number
