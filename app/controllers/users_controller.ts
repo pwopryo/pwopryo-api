@@ -8,13 +8,19 @@ export default class UsersController {
     /**
      * Display a list of resource
      */
-    async index({ bouncer, response }: HttpContext) {
+    async index({ bouncer, response, request }: HttpContext) {
+        const page = request.input('page', 1)
+        const limit = request.input('limit', 10)
+
         try {
             if (await bouncer.with(UserPolicy).denies('index')) {
                 return response.forbidden({ message: 'Accès refusé' })
             }
 
-            const users = await User.all()
+            const users = await User.query()
+                .select('*')
+                .orderBy('createdAt', 'desc')
+                .paginate(page, limit)
 
             return response.ok({ data: users })
         } catch (error) {

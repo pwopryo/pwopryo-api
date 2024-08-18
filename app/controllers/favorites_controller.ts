@@ -6,7 +6,10 @@ export default class FavoritesController {
     /**
      * Display a list of resource
      */
-    async index({ auth, response }: HttpContext) {
+    async index({ auth, response, request }: HttpContext) {
+        const page = request.input('page', 1)
+        const limit = request.input('limit', 10)
+
         try {
             const favorites = await Favorite
                 .query()
@@ -17,6 +20,8 @@ export default class FavoritesController {
                             'id', 'title', 'address', 'city', 'department', 'type', 'price', 'createdAt'
                         ))
                 .where({ isLiked: true, userId: auth.user!.id, })
+                .orderBy('createdAt', 'desc')
+                .paginate(page, limit)
 
             return response.ok({ data: favorites })
         } catch (error) {

@@ -12,7 +12,10 @@ export default class PropertiesController {
     /**
      * Display a list of resource
      */
-    async index({ response }: HttpContext) {
+    async index({ response, request }: HttpContext) {
+        const page = request.input('page', 1)
+        const limit = request.input('limit', 10)
+
         try {
             const properties = await Property
                 .query()
@@ -21,6 +24,8 @@ export default class PropertiesController {
                 .select(
                     'id', 'title', 'address', 'numBedrooms', 'numBathrooms', 'sqft', 'type', 'price', 'disponibility', 'createdAt'
                 )
+                .orderBy('createdAt', 'desc')
+                .paginate(page, limit)
 
             return response.ok({ data: properties })
         } catch (error) {
@@ -214,6 +219,9 @@ export default class PropertiesController {
     * Filter properties based on various criteria
     */
     async filter({ response, request }: HttpContext) {
+        const page = request.input('page', 1)
+        const limit = request.input('limit', 10)
+
         try {
             const {
                 city, department, type, minPrice, maxPrice,
@@ -238,6 +246,8 @@ export default class PropertiesController {
                 .select(
                     'id', 'title', 'address', 'numBedrooms', 'numBathrooms', 'sqft', 'type', 'price', 'disponibility', 'createdAt'
                 )
+                .orderBy('createdAt', 'desc')
+                .paginate(page, limit)
 
             return response
                 .ok({ data: properties })
