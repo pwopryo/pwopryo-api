@@ -26,6 +26,7 @@ Before you begin, ensure you have the following installed:
 - Node.js (v14.x or higher)
 - npm (v6.x or higher)
 - PostgreSQL
+- **Optional (for Docker setup)**: Docker
 
 ### Installation
 
@@ -60,3 +61,15 @@ Before you begin, ensure you have the following installed:
    ```
 
 2. The API will be available at `http://localhost:3333`.
+
+### Optional: Running with Docker
+
+1. Ensure Docker is installed.
+
+2. Build and start the containers:
+
+```bash
+   docker-compose up --build
+   ```
+
+3. The API will be available at http://localhost:3333.
