@@ -1,8 +1,9 @@
 import User from '#models/user'
 import UserPolicy from '#policies/user_policy';
+import R2Service from '#services/r2_service';
 import { updateUserValidator } from '#validators/user';
+import { cuid } from '@adonisjs/core/helpers';
 import type { HttpContext } from '@adonisjs/core/http'
-import app from '@adonisjs/core/services/app';
 
 export default class UsersController {
     /**
@@ -69,24 +70,41 @@ export default class UsersController {
                 return response.forbidden({ message: 'Accès refusé' })
             }
 
+            let avatarUploadUrl = null
             if (payload.avatar) {
-                await payload.avatar?.move(app.makePath('uploads/profiles'), {
-                    name: user.avatar,
-                    overwrite: true
-                })
+                const newAvatarKey = `profiles/${cuid()}.webp`
+                avatarUploadUrl = await R2Service.getUploadUrl(
+                    newAvatarKey,
+                    payload.avatar.headers['content-type'],
+                    payload.avatar.size
+                )
+
+                if (user.avatar) {
+                    await R2Service.deleteObject(user.avatar)
+                }
+
+                user.avatar = newAvatarKey
             }
 
             const userUpdated = await user.merge({
                 fullName: payload.fullName,
                 email: payload.email,
                 password: payload.password,
-                avatar: payload.avatar?.fileName,
                 phoneNumber: payload.phoneNumber,
                 role: payload.role,
             }).save()
 
-            return response.ok({ user: userUpdated })
+            return response.ok({
+                data: {
+                    user: userUpdated,
+                    avatarUploadUrl: avatarUploadUrl,
+                },
+            })
         } catch (error) {
+            if (error.message === 'Type de fichier invalide' || error.message === 'La taille du fichier dépasse la limite') {
+                return response.badRequest({ message: error.message })
+            }
+
             if (error.code === 'E_VALIDATION_ERROR') {
                 return response.unprocessableEntity({ messages: error.messages })
             }

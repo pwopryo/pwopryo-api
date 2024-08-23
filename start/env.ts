@@ -42,5 +42,17 @@ export default await Env.create(new URL('../', import.meta.url), {
   |----------------------------------------------------------
   */
   RESEND_API_KEY: Env.schema.string(),
-  EMAIL: Env.schema.string()
+  EMAIL: Env.schema.string(),
+
+  /*
+ |----------------------------------------------------------
+ | Variables for configuring CloudFlare R2
+ |----------------------------------------------------------
+ */
+  R2_ACCOUNT_ID: Env.schema.string(),
+  R2_TOKEN: Env.schema.string(),
+  R2_ACCESS_KEY_ID: Env.schema.string(),
+  R2_SECRET_ACCESS_KEY: Env.schema.string(),
+  R2_BUCKET_NAME: Env.schema.string(),
+  R2_CUSTOM_DOMAIN: Env.schema.string(),
 })
