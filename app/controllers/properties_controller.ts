@@ -1,12 +1,11 @@
 import Property from '#models/property';
 import PropertyImage from '#models/property_image';
 import PropertyPolicy from '#policies/property_policy';
+import R2Service from '#services/r2_service';
 import { createPropertyValidator, updatePropertyValidator } from '#validators/property';
 import { cuid } from '@adonisjs/core/helpers';
 import type { HttpContext } from '@adonisjs/core/http'
-import app from '@adonisjs/core/services/app';
-import fs from 'fs'
-import path from 'path'
+
 
 export default class PropertiesController {
     /**
@@ -61,21 +60,31 @@ export default class PropertiesController {
 
             await property.related('offers').attach(payload.offers)
 
+            const imageUploadUrls = []
             for (let index = 0; index < payload.images.length; index++) {
                 const image = payload.images[index]
+                const imageKey = `properties/${cuid()}.webp`
 
-                await image.move(app.makePath('uploads/properties'), {
-                    name: `${cuid()}.webp`
-                })
+                const uploadUrl = await R2Service.getUploadUrl(
+                    imageKey,
+                    image.headers['content-type'],
+                    image.size
+                )
+                imageUploadUrls.push(uploadUrl)
 
                 await PropertyImage.create({
                     propertyId: property.id,
-                    imageUrl: image.fileName,
+                    imageUrl: imageKey,
                     isPrimary: index === 0
                 })
             }
 
-            return response.created({ data: property })
+            await property.load('images')
+            await property.load('offers')
+
+            return response.created({
+                data: { property: property, images: imageUploadUrls }
+            })
         } catch (error) {
             if (error.code === 'E_VALIDATION_ERROR') {
                 return response.unprocessableEntity({ messages: error.messages })
@@ -131,7 +140,7 @@ export default class PropertiesController {
                 return response.forbidden({ message: 'Accès refusé.' })
             }
 
-            const propertyUpdated = await property.merge({
+            await property.merge({
                 title: payload.title,
                 description: payload.description ?? payload.description,
                 address: payload.address,
@@ -146,36 +155,39 @@ export default class PropertiesController {
                 isAvailable: payload.is_available
             }).save()
 
-            await propertyUpdated.related('offers').sync(payload.offers)
+            await property.related('offers').sync(payload.offers)
 
-            const existingImages = await PropertyImage
-                .query()
-                .where('property_id', property.id)
-
-            for (const img of existingImages) {
-                const filePath = path.join('uploads/properties', img.imageUrl)
-                if (fs.existsSync(filePath)) {
-                    fs.unlinkSync(filePath)
-                }
+            // Delete old images
+            const oldImages = await property.related('images').query()
+            for (const img of oldImages) {
+                await R2Service.deleteObject(img.imageUrl)
+                await img.delete()
             }
 
-            await PropertyImage.query().where('property_id', property.id).delete()
-
+            const imageUploadUrls = []
             for (let index = 0; index < payload.images.length; index++) {
                 const image = payload.images[index]
-
-                await image.move(app.makePath('uploads/properties'), {
-                    name: `${cuid()}.webp`,
-                })
+                const imageKey = `properties/${cuid()}.webp`
+                const uploadUrl = await R2Service.getUploadUrl(
+                    imageKey,
+                    image.headers['content-type'],
+                    image.size
+                )
+                imageUploadUrls.push(uploadUrl)
 
                 await PropertyImage.create({
                     propertyId: property.id,
-                    imageUrl: image.fileName,
+                    imageUrl: imageKey,
                     isPrimary: index === 0
                 })
             }
 
-            return response.ok({ data: property })
+            await property.load('images')
+            await property.load('offers')
+
+            return response.created({
+                data: { property: property, images: imageUploadUrls }
+            })
         } catch (error) {
             if (error.code === 'E_VALIDATION_ERROR') {
                 return response.unprocessableEntity({ messages: error.messages })

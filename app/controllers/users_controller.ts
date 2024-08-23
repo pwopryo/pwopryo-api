@@ -57,7 +57,7 @@ export default class UsersController {
     /**
      * Handle form submission for the edit action
      */
-    async update({ bouncer, params, request, response }: HttpContext) {
+    async update({ auth, bouncer, params, request, response }: HttpContext) {
         try {
             const payload = await request.validateUsing(updateUserValidator)
             const user = await User.find(params.id)
@@ -67,6 +67,10 @@ export default class UsersController {
             }
 
             if (await bouncer.with(UserPolicy).denies('edit', user)) {
+                return response.forbidden({ message: 'Accès refusé' })
+            }
+
+            if (payload.role === 'Admin' && auth.user!.role !== 'Admin') {
                 return response.forbidden({ message: 'Accès refusé' })
             }
 

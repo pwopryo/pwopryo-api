@@ -71,6 +71,7 @@ const messages = {
     boolean: 'La valeur doit être un booléen',
     positive: '{{ field }} doit être positif',
     number: '{{ field }} doit être un nombrer',
+    array: 'proprieté doit contenir au moins 3 images',
 }
 
 const fields = {
