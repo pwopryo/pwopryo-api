@@ -6,6 +6,7 @@ An application designed to simplify the process of renting and leasing propertie
 
 - **Backend Framework**: AdonisJs
 - **Database**: PostgreSQL
+- **File Storage**: Cloudflare R2
 - **Containerization**: Docker, Traefik
 
 ## Features
