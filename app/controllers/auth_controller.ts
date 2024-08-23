@@ -3,18 +3,23 @@ import User from '#models/user';
 import { registerUserValidator, loginUserValidator, otpValidator, emailValidator, resetPasswordValidator } from '#validators/auth';
 import { cuid } from '@adonisjs/core/helpers';
 import type { HttpContext } from '@adonisjs/core/http'
-import app from '@adonisjs/core/services/app';
 import { randomUUID } from 'crypto';
+import R2Service from '#services/r2_service';
 
 export default class AuthController {
     public async register({ auth, request, response }: HttpContext) {
         try {
             const payload = await request.validateUsing(registerUserValidator)
+            let avatarKey = null
+            let avatarUploadUrl = null
 
             if (payload.avatar) {
-                await payload.avatar.move(app.makePath('uploads/profiles'), {
-                    name: `${cuid()}.webp`
-                })
+                avatarKey = `profiles/${cuid()}.webp`
+                avatarUploadUrl = await R2Service.getUploadUrl(
+                    avatarKey,
+                    payload.avatar.headers['content-type'],
+                    payload.avatar.size
+                )
             }
 
             const user = await User.create({
@@ -22,7 +27,7 @@ export default class AuthController {
                 fullName: payload.fullName,
                 email: payload.email,
                 password: payload.password,
-                avatar: payload.avatar?.fileName,
+                avatar: avatarKey,
                 phoneNumber: payload.phoneNumber,
                 role: payload.role ? payload.role : "User",
                 isVerified: false
@@ -31,8 +36,18 @@ export default class AuthController {
             await auth.use('web').login(user, !!request.input('remember_me'))
             await user.sendVerifyEmail()
 
-            return response.created({ data: user });
+            return response.created({
+                data: {
+                    user: user,
+                    avatarUploadUrl: avatarUploadUrl,
+                },
+
+            })
         } catch (error) {
+            if (error.message === 'Type de fichier invalide' || error.message === 'La taille du fichier dépasse la limite') {
+                return response.badRequest({ message: error.message })
+            }
+
             if (error.code === 'E_VALIDATION_ERROR') {
                 return response.unprocessableEntity({ messages: error.messages })
             }

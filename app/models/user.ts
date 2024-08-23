@@ -10,6 +10,7 @@ import { DbRememberMeTokensProvider } from '@adonisjs/auth/session'
 import Otp from './otp.js'
 import mail from '@adonisjs/mail/services/main'
 import env from '#start/env'
+import R2Service from '#services/r2_service'
 
 const AuthFinder = withAuthFinder(() => hash.use('scrypt'), {
   uids: ['email'],
@@ -33,7 +34,7 @@ export default class User extends compose(BaseModel, AuthFinder) {
   declare password: string
 
   @column()
-  declare avatar: string
+  declare avatar: string | null
 
   @column()
   declare phoneNumber: string
@@ -129,5 +130,9 @@ export default class User extends compose(BaseModel, AuthFinder) {
           propertyTitle: propertyTitle,
         })
     })
+  }
+
+  public getAvatarUrl(): string | null {
+    return this.avatar ? R2Service.getPublicUrl(this.avatar) : null
   }
 }
