@@ -23,6 +23,7 @@ router.get('health', ({ response }) => response.noContent())
 router.group(() => {
   router.post('/register', [AuthController, 'register'])
   router.post('/login', [AuthController, 'login'])
+    .use([middleware.userVerification()])
   router.post('/verify-email', [AuthController, 'verifyOtp'])
     .use(middleware.auth())
   router.post('/logout', [AuthController, 'logout'])
