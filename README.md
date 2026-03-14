@@ -1,6 +1,6 @@
 # Proprio Backend
 
-An application designed to simplify the process of renting and leasing properties in Haiti.
+An application designed to simplify the process of renting and leasing properties.
 
 ## Technologies
 
